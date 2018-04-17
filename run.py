@@ -13,12 +13,12 @@ from correlational_net import *
 
 
 
-nvis = 79505   # number of visible neurons
-nhid = 40		# number of hidden neurons
-fts1 = 43614	# number of features in first view
-fts2 = 35891	# number of features in second view
+nvis = 201171   # number of visible neurons
+nhid = 100		# number of hidden neurons
+fts1 = 91808	# number of features in first view
+fts2 = 109363	# number of features in second view
 lamda = 4 		# The lambda parameter explained in the paper
-batch_size=20   # No. of examples per batch
+batch_size=64   # No. of examples per batch
 
 
 

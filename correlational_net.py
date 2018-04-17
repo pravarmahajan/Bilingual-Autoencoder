@@ -18,17 +18,12 @@ This function "load" takes 3 inputs : name of the file to be loaded, shared vari
 Number of rows in matrix is fixed to be 1000. Number of columns in determined by the number of nodes in the visible layers.
 The matrix file should be in scipy sparse matrix format.
 """
-def load(file,train_set_x,nvis):
+def load(file,train_set_x):
     print "loading ... ", file
-    x = numpy.load(file+"d.npy")
-    y = numpy.load(file+"i.npy")
-    z = numpy.load(file+"p.npy")
-    mm = sparse.csr_matrix((x,y,z),shape=(1000,nvis))
     mm = sparse.load_npz(file)
     mm = mm.todense()
     train_set = numpy.array(mm,dtype="float32")
     train_set_x.set_value(train_set,borrow=True)
-
 
 
 class Autoencoder(object):
@@ -118,10 +113,11 @@ class Autoencoder(object):
 
 
             cor = list()
+            batch_size = y1.shape[0]
 
             for i in range(0,self.n_hidden):
-                x1 = y1[:,i] - (ones(20)*(T.sum(y1[:,i])/20))
-            	x2 = y2[:,i] - (ones(20)*(T.sum(y2[:,i])/20))
+                x1 = y1[:,i] - (ones(batch_size)*(T.sum(y1[:,i])/batch_size))
+            	x2 = y2[:,i] - (ones(batch_size)*(T.sum(y2[:,i])/batch_size))
             	nr = T.sum(x1 * x2) / (T.sqrt(T.sum(x1 * x1))*T.sqrt(T.sum(x2 * x2)))
             	cor.append(-nr)
             
@@ -193,7 +189,6 @@ class Autoencoder(object):
 def corr_net(learning_rate=0.1, training_epochs=50,
             batch_size=20, nvis=400,nhid=40,fts1=100,fts2=100, lamda = 4):
 
-    import ipdb; ipdb.set_trace()
     index = T.lscalar()   
     x = T.matrix('x') 
 
@@ -245,8 +240,8 @@ def corr_net(learning_rate=0.1, training_epochs=50,
                 typeflag = 2
             else:
                 typeflag = 0    
-        
-            for batch_index in range(0,int(next[2])):
+            num_batches = train_set_x.shape[0]//batch_size
+            for batch_index in range(0,num_batches):
                 if(typeflag==0):
                     c.append(train_daxy(batch_index))
                 elif(typeflag==1):
