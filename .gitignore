@@ -1,0 +1,4 @@
+*.pyc
+venv
+Readme.txt
+details.txt
