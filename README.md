@@ -41,3 +41,4 @@ Load the conda environment as described in previous subsection
 ```
 THEANO_FLAGS='device=cuda,floatX=float32' python -u run.py
 ```
+A sample `run.sub` has been added as well, which can be submitted directly via `qsub run.sub`.
