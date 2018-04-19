@@ -34,7 +34,7 @@ module load cuda
 source activate <env_name>
 ```
 
-For deactivating the current environment, just issue the command `deactivate`, just like `pip`.
+For deactivating the current environment, just issue the command `source deactivate`.
 
 ## Running on GPU
 Load the conda environment as described in previous subsection
