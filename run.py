@@ -13,18 +13,18 @@ from correlational_net import *
 
 
 
-nvis = 201171   # number of visible neurons
-nhid = 100		# number of hidden neurons
+lamda = 4       # The lambda parameter explained in the paper
+batch_size=16   # No. of examples per batch
+nhid = 100	# number of hidden neurons
+data_filename = "./en_de.npz"
+data = load(data_filename)
+nvis = data.shape[1]
 fts1 = 91808	# number of features in first view
-fts2 = 109363	# number of features in second view
-lamda = 4 		# The lambda parameter explained in the paper
-batch_size=64   # No. of examples per batch
+fts2 = nvis-data # number of features in second view
 
-
-
-training_epochs =2  # No. of training epochs
+training_epochs = 2  # No. of training epochs
 
 
 
 
-corr_net(nvis=nvis,nhid=nhid,fts1=fts1,fts2=fts2, lamda = lamda, training_epochs=training_epochs,batch_size=batch_size)
+corr_net(data, nvis=nvis,nhid=nhid,fts1=fts1,fts2=fts2, lamda = lamda, training_epochs=training_epochs,batch_size=batch_size)

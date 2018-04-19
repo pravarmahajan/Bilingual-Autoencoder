@@ -11,20 +11,19 @@ import theano
 import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
 from scipy import sparse
-
+import progressbar
 
 """
 This function "load" takes 3 inputs : name of the file to be loaded, shared variable to which the file is to be loaded, number of columns in the matrix
 Number of rows in matrix is fixed to be 1000. Number of columns in determined by the number of nodes in the visible layers.
 The matrix file should be in scipy sparse matrix format.
 """
-def load(file,train_set_x):
-    print "loading ... ", file
-    mm = sparse.load_npz(file)
+def load(filename):
+    print "loading ... ", filename
+    #mm = sparse.load_npz(filename).astype(numpy.int16)
+    mm = sparse.load_npz(filename)
     mm = mm.todense()
-    train_set = numpy.array(mm,dtype="float32")
-    train_set_x.set_value(train_set,borrow=True)
-
+    return mm
 
 class Autoencoder(object):
 
@@ -116,8 +115,8 @@ class Autoencoder(object):
             batch_size = y1.shape[0]
 
             for i in range(0,self.n_hidden):
-                x1 = y1[:,i] - (ones(batch_size)*(T.sum(y1[:,i])/batch_size))
-            	x2 = y2[:,i] - (ones(batch_size)*(T.sum(y2[:,i])/batch_size))
+                x1 = y1[:,i] - (T.ones((batch_size,))*(T.sum(y1[:,i])/batch_size))
+            	x2 = y2[:,i] - (T.ones((batch_size,))*(T.sum(y2[:,i])/batch_size))
             	nr = T.sum(x1 * x2) / (T.sqrt(T.sum(x1 * x1))*T.sqrt(T.sum(x2 * x2)))
             	cor.append(-nr)
             
@@ -186,84 +185,61 @@ class Autoencoder(object):
         numpy.save("results/w"+n, self.W.get_value(borrow=True))
 
         
-def corr_net(learning_rate=0.1, training_epochs=50,
+def train_test_split(data):
+    idx = int(data.shape[0]*0.8)
+    return data[:idx,:], data[idx:,:]
+
+def corr_net(data, learning_rate=0.1, training_epochs=50,
             batch_size=20, nvis=400,nhid=40,fts1=100,fts2=100, lamda = 4):
 
     index = T.lscalar()   
     x = T.matrix('x') 
 
-    
+    train_data, val_data = train_test_split(data)
+    train_samples = train_data.shape[0]
     rng = numpy.random.RandomState(123)
     theano_rng = RandomStreams(rng.randint(2 ** 30))
 
     da = Autoencoder(numpy_rng=rng, theano_rng=theano_rng, input=x, n_visible=nvis, n_hidden=nhid,fts1=fts1, fts2=fts2, lamda = lamda)
 
+    print "Model built"
+
     ct = 0
     
     
     start_time = time.clock()
-
-    train_set_x = theano.shared(numpy.asarray(numpy.zeros((1000,nvis)), dtype=theano.config.floatX), borrow=True)
     
-    cost1, updates1 = da.get_cost_updates(input_type=1,learning_rate=learning_rate)
-    train_dax = theano.function([index], cost1,updates=updates1,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
-        
-    cost2, updates2 = da.get_cost_updates(input_type=2,learning_rate=learning_rate)
-    train_day = theano.function([index], cost2,updates=updates2,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
+    train_set_x = theano.shared(train_data, borrow=True)
+    
+    #cost1, updates1 = da.get_cost_updates(input_type=1,learning_rate=learning_rate)
+    #train_dax = theano.function([index], cost1,updates=updates1,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
+    #    
+    #cost2, updates2 = da.get_cost_updates(input_type=2,learning_rate=learning_rate)
+    #train_day = theano.function([index], cost2,updates=updates2,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
     
     cost3, updates3 = da.get_cost_updates(input_type=0,learning_rate=learning_rate)
     train_daxy = theano.function([index], cost3,updates=updates3,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
+
+    print "Cost and update functions generated"
     
     
 
     typeflag=0
     diff = 0
     flag = 1
-
-    detfile = file("details.txt","w")
-    detfile.close()
+    num_batches = 1+train_data.shape[0]//batch_size
 
     for epoch in xrange(training_epochs):
 
         print "in epoch ", epoch
         
-        c = []
-        
-        ipfile = open("ip.txt","r")
+        loss = 0.0
+        bar = progressbar.ProgressBar()
+        for batch_index in bar(range(0,num_batches)):
+            loss += train_daxy(batch_index)
 
-        for line in ipfile:
-            next = line.strip().split(",")
-            load(next[1],train_set_x,nvis)
-            if(next[0]=="x"):
-                typeflag = 1            
-            elif(next[0]=="y"):
-                typeflag = 2
-            else:
-                typeflag = 0    
-            num_batches = train_set_x.shape[0]//batch_size
-            for batch_index in range(0,num_batches):
-                if(typeflag==0):
-                    c.append(train_daxy(batch_index))
-                elif(typeflag==1):
-                    c.append(train_dax(batch_index))
-                elif(typeflag==2):
-                    c.append(train_day(batch_index))
+        print("Train Loss = %.2f" % (loss / num_batches))
 
-
-        if(flag==1):
-            flag = 0
-            diff = numpy.mean(c)
-            di = diff
-        else:
-            di = numpy.mean(c) - diff
-            diff = numpy.mean(c)
-            print 'Difference between 2 epochs is ', di
-        print 'Training epoch %d, cost ' % epoch, diff
-
-        detfile = file("details.txt","a")
-        detfile.write(str(diff)+"\n")
-        detfile.close()
-        # save the parameters for every 2 epochs
         if((epoch+1)%2==0):
             da.save_matrices(str(epoch))
 
@@ -271,8 +247,4 @@ def corr_net(learning_rate=0.1, training_epochs=50,
 
     training_time = (end_time - start_time)
 
-    print ' code ran for %.2fm' % (training_time / 60.)
     da.save_matrices("final")
-
-                
-
