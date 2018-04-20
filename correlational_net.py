@@ -21,7 +21,7 @@ The matrix file should be in scipy sparse matrix format.
 def load(filename):
     print "loading ... ", filename
     #mm = sparse.load_npz(filename).astype(numpy.int16)
-    mm = sparse.load_npz(filename)
+    mm = sparse.load_npz(filename).astype(theano.config.floatX)
     mm = mm.todense()
     return mm
 
