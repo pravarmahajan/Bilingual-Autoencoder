@@ -27,6 +27,12 @@ conda env update
 
 The last line will update the environment by installing all packages present in `environment.yml`
 
+### Install theano's dev version
+This is needed because the theano's production version has certain bugs which don't allow it to work well with cuda.
+```
+conda install -c mila-udem/label/pre theano pygpu libgpuarray
+```
+
 ## Load conda environment (every usage)
 ```
 module load python/3.5
