@@ -14,7 +14,7 @@ from correlational_net import *
 
 
 lamda = 4       # The lambda parameter explained in the paper
-batch_size=128   # No. of examples per batch
+batch_size=256   # No. of examples per batch
 nhid = 100	# number of hidden neurons
 data_filename = "./en_iu.npz"
 data = load(data_filename)
