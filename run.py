@@ -14,14 +14,14 @@ from correlational_net import *
 
 
 lamda = 4       # The lambda parameter explained in the paper
-batch_size=16   # No. of examples per batch
+batch_size=128   # No. of examples per batch
 nhid = 100	# number of hidden neurons
-data_filename = "./en_de.npz"
+data_filename = "./en_iu.npz"
 data = load(data_filename)
 nvis = data.shape[1]
-fts1 = 91808	# number of features in first view
-fts2 = nvis-data # number of features in second view
-
+fts1 = 217785	# number of features in first view
+fts2 = nvis-fts1 # number of features in second view
+assert(fts2==261329)
 training_epochs = 2  # No. of training epochs
 
 

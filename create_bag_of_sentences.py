@@ -25,9 +25,9 @@ def get_bos_matrix(filename):
     bos_matrix = scipy.sparse.csr_matrix((x, np.array(y), z))
     return bos_matrix
 
-m1 = get_bos_matrix("./bible/en0.txt")
+m1 = get_bos_matrix("./data/eng_sent_data")
 print(m1.shape[1])
-m2 = get_bos_matrix("./bible/de0.txt")
+m2 = get_bos_matrix("./data/inuk_sent_data")
 print(m2.shape[1])
 
-scipy.sparse.save_npz('en_de', scipy.sparse.hstack((m1, m2), format='csr'))
+scipy.sparse.save_npz('en_iu', scipy.sparse.hstack((m1, m2), format='csr'))

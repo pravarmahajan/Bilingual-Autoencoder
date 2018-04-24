@@ -20,9 +20,7 @@ The matrix file should be in scipy sparse matrix format.
 """
 def load(filename):
     print "loading ... ", filename
-    #mm = sparse.load_npz(filename).astype(numpy.int16)
-    mm = sparse.load_npz(filename)
-    mm = mm.todense()
+    mm = sparse.load_npz(filename).astype(theano.config.floatX)
     return mm
 
 class Autoencoder(object):
@@ -209,7 +207,8 @@ def corr_net(data, learning_rate=0.1, training_epochs=50,
     
     start_time = time.clock()
     
-    train_set_x = theano.shared(train_data, borrow=True)
+    #train_set_x = theano.shared(train_data, borrow=True)
+    train_x = T.matrix(name='train_x', dtype=theano.config.floatX)
     
     #cost1, updates1 = da.get_cost_updates(input_type=1,learning_rate=learning_rate)
     #train_dax = theano.function([index], cost1,updates=updates1,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
@@ -218,7 +217,8 @@ def corr_net(data, learning_rate=0.1, training_epochs=50,
     #train_day = theano.function([index], cost2,updates=updates2,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
     
     cost3, updates3 = da.get_cost_updates(input_type=0,learning_rate=learning_rate)
-    train_daxy = theano.function([index], cost3,updates=updates3,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
+    #train_daxy = theano.function([train_x], cost3,updates=updates3,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
+    train_daxy = theano.function([train_x], cost3,updates=updates3, givens={x:train_x})
 
     print "Cost and update functions generated"
     
@@ -236,7 +236,7 @@ def corr_net(data, learning_rate=0.1, training_epochs=50,
         loss = 0.0
         bar = progressbar.ProgressBar()
         for batch_index in bar(range(0,num_batches)):
-            loss += train_daxy(batch_index)
+            loss += train_daxy(train_data[batch_size*batch_index:batch_size*(batch_index+1)].todense())
 
         print("Train Loss = %.2f" % (loss / num_batches))
 
