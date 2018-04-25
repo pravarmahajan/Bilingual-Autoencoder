@@ -20,9 +20,7 @@ The matrix file should be in scipy sparse matrix format.
 """
 def load(filename):
     print "loading ... ", filename
-    #mm = sparse.load_npz(filename).astype(numpy.int16)
     mm = sparse.load_npz(filename).astype(theano.config.floatX)
-    mm = mm.todense()
     return mm
 
 class Autoencoder(object):
@@ -204,47 +202,42 @@ def corr_net(data, learning_rate=0.1, training_epochs=50,
 
     print "Model built"
 
-    ct = 0
     
-    
-    start_time = time.clock()
-    
-    train_set_x = theano.shared(train_data, borrow=True)
-    
-    #cost1, updates1 = da.get_cost_updates(input_type=1,learning_rate=learning_rate)
-    #train_dax = theano.function([index], cost1,updates=updates1,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
-    #    
-    #cost2, updates2 = da.get_cost_updates(input_type=2,learning_rate=learning_rate)
-    #train_day = theano.function([index], cost2,updates=updates2,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
+    train_x = T.matrix(name='train_x', dtype=theano.config.floatX)
     
     cost3, updates3 = da.get_cost_updates(input_type=0,learning_rate=learning_rate)
-    train_daxy = theano.function([index], cost3,updates=updates3,givens={x: train_set_x[index * batch_size:(index + 1) * batch_size]})
+    train_daxy = theano.function([train_x], cost3,updates=updates3, givens={x:train_x})
+    val_daxy = theano.function([train_x], cost3, givens={x:train_x})
 
     print "Cost and update functions generated"
     
-    
 
-    typeflag=0
-    diff = 0
     flag = 1
-    num_batches = 1+train_data.shape[0]//batch_size
+    num_train_batches = 1+train_data.shape[0]//batch_size
+    num_val_batches = 1+val_data.shape[0]//batch_size
 
     for epoch in xrange(training_epochs):
 
         print "in epoch ", epoch
         
-        loss = 0.0
+        train_loss = 0.0
         bar = progressbar.ProgressBar()
-        for batch_index in bar(range(0,num_batches)):
-            loss += train_daxy(batch_index)
+        for batch_index in bar(range(0,num_train_batches)):
+            lo_idx = batch_size*batch_index
+            hi_idx = min(batch_size*(batch_index+1), train_data.shape[0])
+            train_loss += train_daxy(train_data[lo_idx:hi_idx].todense())
 
-        print("Train Loss = %.2f" % (loss / num_batches))
+        print("Train loss = %.2f" % (train_loss / num_train_batches))
+
+        val_loss = 0.0
+        for batch_index in range(0,num_val_batches):
+            lo_idx = batch_size*batch_index
+            hi_idx = min(batch_size*(batch_index+1), val_data.shape[0])
+            val_loss += val_daxy(val_data[lo_idx:hi_idx].todense())
+        print("val loss = %.2f" % (val_loss / num_val_batches))
 
         if((epoch+1)%2==0):
             da.save_matrices(str(epoch))
 
-    end_time = time.clock()
-
-    training_time = (end_time - start_time)
 
     da.save_matrices("final")
