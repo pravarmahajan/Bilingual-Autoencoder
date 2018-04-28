@@ -15,10 +15,9 @@ print len(inuk_words)
 
 b = np.load("results/bfinal.npy")
 W = np.load("results/wfinal.npy")
-W = W + np.expand_dims(b, -1)
+W = W + b
 eng_vectors = dict()
 inuk_vectors = dict()
-import ipdb; ipdb.set_trace()
 with open('word2vec/eng.txt', 'w') as f:
     for (k, v) in eng_words.items():
         f.write(k + " " + " ".join([str(x) for x in W[v]])+"\n")
