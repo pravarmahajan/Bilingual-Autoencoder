@@ -1,6 +1,7 @@
 import string
 import scipy.sparse
 import numpy as np
+import pickle
 
 def get_bos_matrix(filename):
     lines = open(filename, 'r').readlines()
@@ -14,7 +15,7 @@ def get_bos_matrix(filename):
         cleaned = ''.join([ch for ch in line.lower() if ch not in string.punctuation])
         parts = cleaned.strip().split()[1:]
 
-        for word in enumerate(parts):
+        for word in parts:
             if not word in word_to_id:
                 word_to_id[word] = len(word_to_id)
             y.append(word_to_id[word])
@@ -23,11 +24,13 @@ def get_bos_matrix(filename):
     x = np.ones((len(y),))
 
     bos_matrix = scipy.sparse.csr_matrix((x, np.array(y), z))
-    return bos_matrix
+    return bos_matrix, word_to_id
 
-m1 = get_bos_matrix("./data/eng_sent_data")
+m1, word_to_id_1 = get_bos_matrix("./data/eng_sent_data")
 print(m1.shape[1])
-m2 = get_bos_matrix("./data/inuk_sent_data")
+m2, word_to_id_2 = get_bos_matrix("./data/inuk_sent_data")
 print(m2.shape[1])
 
 scipy.sparse.save_npz('en_iu', scipy.sparse.hstack((m1, m2), format='csr'))
+pickle.dump(word_to_id_1, open('./data/eng_word2id.pkl', 'wb'))
+pickle.dump(word_to_id_2, open('./data/inuk_word2id.pkl', 'wb'))

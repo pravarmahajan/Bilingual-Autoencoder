@@ -2,3 +2,10 @@
 venv
 Readme.txt
 details.txt
+corr_net.*
+data
+results/w?.npy
+results/bp?.npy
+results/b?.npy
+bible
+word2vec

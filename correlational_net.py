@@ -195,7 +195,7 @@ def corr_net(data, learning_rate=0.1, training_epochs=50,
 
     train_data, val_data = train_test_split(data)
     train_samples = train_data.shape[0]
-    rng = numpy.random.RandomState(123)
+    rng = numpy.random.RandomState()
     theano_rng = RandomStreams(rng.randint(2 ** 30))
 
     da = Autoencoder(numpy_rng=rng, theano_rng=theano_rng, input=x, n_visible=nvis, n_hidden=nhid,fts1=fts1, fts2=fts2, lamda = lamda)
@@ -236,8 +236,7 @@ def corr_net(data, learning_rate=0.1, training_epochs=50,
             val_loss += val_daxy(val_data[lo_idx:hi_idx].todense())
         print("val loss = %.2f" % (val_loss / num_val_batches))
 
-        if((epoch+1)%2==0):
-            da.save_matrices(str(epoch))
+        da.save_matrices(str(epoch))
 
 
     da.save_matrices("final")
