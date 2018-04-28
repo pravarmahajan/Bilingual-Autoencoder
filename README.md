@@ -48,3 +48,12 @@ Load the conda environment as described in previous subsection
 THEANO_FLAGS='device=cuda,floatX=float32' python -u run.py
 ```
 A sample `run.sub` has been added as well, which can be submitted directly via `qsub run.sub`.
+
+## Order of execution
+```
+python create_bag_of_sentences.py #This will create bag of words and pickle files
+python run.py # This will train the model
+python generate_vectors.py # This will generate vector representaiton for every word
+python evaluate_embeddings.py # This will pull out the most similar words via dict induction
+```
+p
