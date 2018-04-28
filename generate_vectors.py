@@ -13,8 +13,8 @@ inuk_words = pickle.load(open('./data/inuk_word2id.pkl', 'rb'))
 print len(eng_words)
 print len(inuk_words)
 
-b = np.load("results/bfinal.npy")
-W = np.load("results/wfinal.npy")
+b = np.load("results/b5.npy")
+W = np.load("results/w5.npy")
 W = W + b
 eng_vectors = dict()
 inuk_vectors = dict()

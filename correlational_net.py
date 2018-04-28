@@ -10,6 +10,7 @@ import numpy
 import theano
 import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
+from theano import printing
 from scipy import sparse
 import progressbar
 
@@ -25,7 +26,8 @@ def load(filename):
 
 class Autoencoder(object):
 
-    def __init__(self, numpy_rng, theano_rng=None, input=None,n_visible=400, n_hidden=200,W=None, bhid=None, bvis=None,fts1=100,fts2=100,lamda = 4):
+    def __init__(self, numpy_rng, theano_rng=None, input=None,n_visible=400, n_hidden=200,W=None, bhid=None, bvis=None,fts1=100,fts2=100,lamda = 4,
+                L1_reg=0., L2_reg=0.):
 
         
         # Set the number of visible units and hidden units in the network
@@ -73,6 +75,8 @@ class Autoencoder(object):
         self.fts1 = fts1
         self.fts2 = fts2
         self.lamda = lamda
+        self.L1_reg = L1_reg
+        self.L2_reg = L2_reg
         
 
         self.theano_rng = theano_rng
@@ -124,9 +128,11 @@ class Autoencoder(object):
             L2 = - T.sum(self.x * T.log(T.nnet.sigmoid(z2)) + (1 - self.x) * T.log(1 - T.nnet.sigmoid(z2)), axis=1)
             L3 = - T.sum(self.x * T.log(T.nnet.sigmoid(z3)) + (1 - self.x) * T.log(1 - T.nnet.sigmoid(z3)), axis=1)
             L4 =  T.sum(cor)
-            L = L1 + L2 + L3 + (self.lamda * L4) + 100
-
-            cost = T.mean(L)
+            L = L1 + L2 + L3 + (self.lamda * L4)
+            
+            L1_reg_loss = T.sum(abs(self.W)) + T.sum(abs(self.b)) + T.sum(abs(self.b_prime))
+            L2_reg_loss = T.sum(self.W**2) + T.sum(self.b**2) + T.sum(self.b_prime**2)
+            cost = T.mean(L) + self.L1_reg * L1_reg_loss + self.L2_reg * L2_reg_loss
 
             gparams = T.grad(cost, self.params)
             updates = []
@@ -177,10 +183,12 @@ class Autoencoder(object):
 
     # This method saves W, bvis and bhid matrices. `n` is the string attached to the file name. 
     def save_matrices(self,n):
-
-        numpy.save("results/b"+n, self.b.get_value(borrow=True))
-        numpy.save("results/bp"+n, self.b_prime.get_value(borrow=True))
-        numpy.save("results/w"+n, self.W.get_value(borrow=True))
+        dir_name = "results/"+str(self.n_hidden)+"_"+str(self.lamda)+"/"
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        numpy.save(dir_name+"b"+str(n), self.b.get_value(borrow=True))
+        numpy.save(dir_name+"bp"+str(n), self.b_prime.get_value(borrow=True))
+        numpy.save(dir_name+"W"+str(n), self.W.get_value(borrow=True))
 
         
 def train_test_split(data):
@@ -188,7 +196,8 @@ def train_test_split(data):
     return data[:idx,:], data[idx:,:]
 
 def corr_net(data, learning_rate=0.1, training_epochs=50,
-            batch_size=20, nvis=400,nhid=40,fts1=100,fts2=100, lamda = 4):
+            batch_size=20, nvis=400,nhid=40,fts1=100,fts2=100, lamda = 4,
+            L1_reg=0, L2_reg=0):
 
     index = T.lscalar()   
     x = T.matrix('x') 
@@ -198,7 +207,8 @@ def corr_net(data, learning_rate=0.1, training_epochs=50,
     rng = numpy.random.RandomState()
     theano_rng = RandomStreams(rng.randint(2 ** 30))
 
-    da = Autoencoder(numpy_rng=rng, theano_rng=theano_rng, input=x, n_visible=nvis, n_hidden=nhid,fts1=fts1, fts2=fts2, lamda = lamda)
+    da = Autoencoder(numpy_rng=rng, theano_rng=theano_rng, input=x, n_visible=nvis, n_hidden=nhid,fts1=fts1, fts2=fts2, lamda = lamda,
+                    L1_reg=L1_reg, L2_reg=L2_reg)
 
     print "Model built"
 
