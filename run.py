@@ -9,6 +9,7 @@
 from correlational_net import *
 import pickle
 import argparse
+from generate_vectors import *
 
 argp = argparse.ArgumentParser()
 argp.add_argument('--lamda', type=int, default=4, action='store')
@@ -29,5 +30,6 @@ fts2 = nvis-fts1 # number of features in second view
 assert(fts2==len(pickle.load(open('./data/inuk_word2id.pkl', 'rb'))))
 training_epochs = parser.nepochs  # No. of training epochs
 
-corr_net(data, nvis=nvis,nhid=nhid,fts1=fts1,fts2=fts2, lamda = lamda, training_epochs=training_epochs,batch_size=batch_size,
-        L1_reg=parser.L1_reg, L2_reg=parser.L2_reg)
+corr_net(data, nvis=nvis,nhid=nhid,fts1=fts1,fts2=fts2, lamda = lamda, training_epochs=training_epochs,batch_size=batch_size, L1_reg=parser.L1_reg, L2_reg=parser.L2_reg)
+
+gen_vectors('results/'+str(parser.nhid)+'_'+str(parser.lamda)+'/'+'bfinal.npy','results/'+str(parser.nhid)+'_'+str(parser.lamda)+'/'+'Wfinal.npy','word2vec/'+str(parser.nhid)+'_'+str(parser.lamda)+'_eng.txt','word2vec/'+str(parser.nhid)+'_'+str(parser.lamda)+'_inuk.txt'   )

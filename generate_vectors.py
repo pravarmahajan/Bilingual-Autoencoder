@@ -13,15 +13,16 @@ inuk_words = pickle.load(open('./data/inuk_word2id.pkl', 'rb'))
 print len(eng_words)
 print len(inuk_words)
 
-b = np.load("results/b5.npy")
-W = np.load("results/w5.npy")
-W = W + b
-eng_vectors = dict()
-inuk_vectors = dict()
-with open('word2vec/eng.txt', 'w') as f:
-    for (k, v) in eng_words.items():
-        f.write(k + " " + " ".join([str(x) for x in W[v]])+"\n")
 
-with open('word2vec/inuk.txt', 'w') as f:
-    for (k, v) in inuk_words.items():
-        f.write(k + " " + " ".join([str(x) for x in W[v]])+"\n")
+def gen_vectors(bias_file, weight_file, op_eng, op_ink):
+    b = np.load(bias_file)
+    W = np.load(weight_file)
+    W = W + b
+    eng_vectors = dict()
+    inuk_vectors = dict()
+    with open(op_eng, 'w') as f:
+    	for (k, v) in eng_words.items():
+            f.write(k + " " + " ".join([str(x) for x in W[v]])+"\n")
+    with open(op_ink, 'w') as f:
+    	for (k, v) in inuk_words.items():
+            f.write(k + " " + " ".join([str(x) for x in W[v]])+"\n")
